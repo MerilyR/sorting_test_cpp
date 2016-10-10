@@ -4,13 +4,15 @@
  *  Created on: 1. okt 2016
  *      Author: Merily
  */
-#include <iostream>
+#include <stdio.h>
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
-#include <time.h>
+#include <chrono>
+#include <iostream>
+#include <iomanip>
+#include <Windows.h>
 using namespace std;
-
 
 bool contains(int array[], int target, int length){
 	for (int i = 0; i<length; i++)
@@ -20,9 +22,8 @@ bool contains(int array[], int target, int length){
 }
 
 void generateArray (int array[], int length, int from, int to){
-	srand(time(0));
+	int random;
 	for (int i = 0; i<length; i++){
-		int random;
 		do {
 			random = from + (rand() % to);
 		} while (contains(array, random, i));
@@ -31,55 +32,159 @@ void generateArray (int array[], int length, int from, int to){
 }
 
 void bubbleSort (int array[], int length){
-	for (int i = 0; i<length-1; i++){
-		for (int j = 1; j<length-i; j++){
+	int tmp;
+	int n = length;
+	int newn;
+	do{
+		newn = 0;
+		for (int j = 1; j<n; j++){
 			if (array[j-1] > array[j]){
-				int tmp = array[j-1];
+				tmp = array[j-1];
 				array[j-1] = array[j];
 				array[j] = tmp;
+				newn = j;
 			}
 		}
+		n = newn;
+	} while (n != 0);
+}
+
+
+void swapInts (int array[], int firstindex, int secondindex){
+	int tmp = array[firstindex];
+	array[firstindex] = array[secondindex];
+	array[secondindex] = tmp;
+}
+
+void siftDown (int array[], int start, int end){
+	int root = start;
+	while (root*2+1 <= end ){
+		int child = root * 2 + 1;
+		int swap = root;
+		if (array[swap] < array[child])
+			swap = child;
+		if (child + 1 <= end && array[swap] < array[child+1])
+			swap = child+1;
+		if (swap != root){
+			swapInts (array, root, swap);
+			root = swap;
+		}
+		else
+			return;
+	}
+}
+
+void heapify (int array[], int count) {
+	int start = count / 2 - 1;
+	while (start >= 0 ) {
+		siftDown (array, start, count-1);
+		start = start - 1;
+	}
+}
+
+void heapSort (int array[], int length) {
+	heapify (array, length);
+	int end = length - 1;
+	while (end > 0) {
+		swapInts (array, end, 0);
+		end = end - 1;
+		siftDown (array, 0, end);
 	}
 }
 
 int main(){
-
-	int len = 15;
+	srand((unsigned)time(NULL));
+	int len = 2000;
 	int unsorted[len];
-	generateArray(unsorted, len, 0, 100);
+	int unsortedCopyBubble[len];
+	int unsortedCopyHeap[len];
+	chrono::high_resolution_clock::time_point start_time, end_time;
+
+	LARGE_INTEGER frequency;
+	QueryPerformanceFrequency(&frequency);
+
+	LARGE_INTEGER start;
+	LARGE_INTEGER end;
+
+    double interval;
+
+	for(int tc = 0; tc<5; tc++) {
+
+		generateArray(unsorted, len, 0, 65000);
+		/*
+		cout << "Unsorted: ";
+		for (int i = 0 ; i<len; i++)
+			cout << unsorted[i] << "; ";
+		cout << endl;
+*/
+
+		//make copies for other sorting methods
+		std::copy(unsorted, unsorted + len, unsortedCopyBubble);
+		std::copy(unsorted, unsorted + len, unsortedCopyHeap);
+
+		start_time = chrono::high_resolution_clock::now();
+		QueryPerformanceCounter(&start);
+
+		sort(unsorted, unsorted + len);
+/*
+		cout << "  Sorted: ";
+		for (int i = 0 ; i<len; i++)
+			cout << unsorted[i] << "; ";
+		cout << endl;
+*/
+		end_time = chrono::high_resolution_clock::now();
+		QueryPerformanceCounter(&end);
+
+		printf(" std::sort() time: %lld nanoseconds \n", chrono::duration_cast<chrono::nanoseconds>(end_time-start_time).count());
+		interval = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
+		printf(" std::sort() time: %.2f microseconds \n", interval);
 
 
-	cout << "Unsorted: ";
-	for (int i = 0 ; i<len; i++)
-		cout << unsorted[i] << "; ";
-	cout << endl;
+		start_time = chrono::high_resolution_clock::now();
+		QueryPerformanceCounter(&start);
+		/*
+		cout << "  Unsorted: ";
+		for (int i = 0 ; i<len; i++)
+			cout << unsortedCopyBubble[i] << "; ";
+		cout << endl;
+*/
 
-	int unsortedCopy[len];
-	std::copy (unsorted, unsorted + sizeof(unsorted), unsortedCopy);
+		bubbleSort(unsortedCopyBubble, len);
+/*
+		cout << "  Sorted: ";
+		for (int i = 0 ; i<len; i++)
+			cout << unsortedCopyBubble[i] << "; ";
+		cout << endl;
+*/
+		end_time = chrono::high_resolution_clock::now();
+		QueryPerformanceCounter(&end);
 
+		printf("bubbleSort() time: %lld nanoseconds \n", chrono::duration_cast<chrono::nanoseconds>(end_time-start_time).count());
+		interval = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
+		printf("bubbleSort() time: %.2f microseconds \n", interval);
 
-	clock_t start = clock();
+		start_time = chrono::high_resolution_clock::now();
+		QueryPerformanceCounter(&start);
+		/*
+		cout << "  Unsorted: ";
+				for (int i = 0 ; i<len; i++)
+					cout << unsortedCopyHeap[i] << "; ";
+				cout << endl;
+*/
+		heapSort(unsortedCopyHeap, len);
+/*
+		cout << "  Sorted: ";
+		for (int i = 0 ; i<len; i++)
+			cout << unsortedCopyHeap[i] << "; ";
+		cout << endl;
+*/
+		end_time = chrono::high_resolution_clock::now();
+		QueryPerformanceCounter(&end);
 
-	sort(unsorted, unsorted + len);
-	cout << "  Sorted: ";
-	for (int i = 0 ; i<len; i++)
-		cout << unsorted[i] << "; ";
-	cout << endl;
-
-	clock_t end = clock();
-	cout << "sort() time: " << end-start << " clicks" << endl;
-
-	start = clock();
-
-	bubbleSort(unsortedCopy, len);
-	cout << "  Sorted: ";
-	for (int i = 0 ; i<len; i++)
-		cout << unsortedCopy[i] << "; ";
-	cout << endl;
-
-	end = clock();
-	cout << "bubbleSort() time: " << end-start << " clicks" << endl;
-
+		printf("  heapSort() time: %lld nanoseconds \n", chrono::duration_cast<chrono::nanoseconds>(end_time-start_time).count());
+		interval = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
+		printf("  heapSort() time: %.2f microseconds \n\n", interval);
+	}
 	return EXIT_SUCCESS;
 }
 
