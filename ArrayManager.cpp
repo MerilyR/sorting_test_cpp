@@ -118,11 +118,29 @@ void heapSort (int array[], int length) {
 	}
 }
 
+int binarySearch (int array[], int target, int length) {
+	int l = 0;
+	int r = length - 1;
+	int m;
+	while (l <= r) {
+		m = (l+r)/2;
+		if (array[m] == target)
+			return m;
+		else if (array[m] < target) {
+			l = m+1;
+		}
+		else if (array[m] > target) {
+			r = m-1;
+		}
+	}
+	return -1;
+}
+
 int main(){
 	// seed random with time to make randoms really random
 	srand((unsigned)time(NULL));
 	int len = 2000;
-	int unsorted[len];
+	int array[len];
 	int unsortedCopyBubble[len];
 	int unsortedCopyHeap[len];
 
@@ -136,21 +154,27 @@ int main(){
 
 	for(int tc = 0; tc<5; tc++) {
 
-		generateArray(unsorted, len, 0, 65000);
+		generateArray(array, len, 0, 65000);
 
-		//make copies for other sorting methods
+		/*//make copies for other sorting methods
 		std::copy(unsorted, unsorted + len, unsortedCopyBubble);
 		std::copy(unsorted, unsorted + len, unsortedCopyHeap);
-
+*/
 		QueryPerformanceCounter(&start);
 
-		sort(unsorted, unsorted + len);
+		sort(array, array + len);
 
 		QueryPerformanceCounter(&end);
 
 		interval = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
 		printf(" std::sort() time: %.2f microseconds \n", interval);
 
+		cout << "array: ";
+		for (int m : array)
+			cout << m << ";";
+		cout << endl;
+
+/*		//other sorting methods
 		QueryPerformanceCounter(&start);
 
 		bubbleSort(unsortedCopyBubble, len);
@@ -168,6 +192,27 @@ int main(){
 
 		interval = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
 		printf("  heapSort() time: %.2f microseconds \n\n", interval);
+*/
+
+		int response;
+		int index;
+		do {
+			cout << "Insert value to search / -1 to go to next random array" << endl;
+			cin >> response;
+			QueryPerformanceCounter(&start);
+
+			index = binarySearch(array, response, len);
+			if (index == -1)
+				cout << "value not found, try again"<< endl;
+			else
+				cout << "value is on position " << index << endl;
+
+			QueryPerformanceCounter(&end);
+			interval = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
+			printf("binarySearch() time: %.2f microseconds \n", interval);
+		} while (response != -1);
+
+
 	}
 	return EXIT_SUCCESS;
 }
