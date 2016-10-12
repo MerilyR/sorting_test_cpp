@@ -5,12 +5,9 @@
  *      Author: Merily
  */
 #include <stdio.h>
-#include <cstdlib>
 #include <ctime>
-#include <algorithm>
-#include <chrono>
 #include <iostream>
-#include <iomanip>
+#include <algorithm>
 #include <Windows.h>
 using namespace std;
 
@@ -118,6 +115,9 @@ void heapSort (int array[], int length) {
 	}
 }
 
+/*
+ * binary search from array
+ */
 int binarySearch (int array[], int target, int length) {
 	int l = 0;
 	int r = length - 1;
@@ -141,8 +141,8 @@ int main(){
 	srand((unsigned)time(NULL));
 	int len = 2000;
 	int array[len];
-	int unsortedCopyBubble[len];
-	int unsortedCopyHeap[len];
+	//int unsortedCopyBubble[len];
+	//int unsortedCopyHeap[len];
 
 	LARGE_INTEGER frequency;
 	QueryPerformanceFrequency(&frequency);
@@ -150,7 +150,7 @@ int main(){
 	LARGE_INTEGER start;
 	LARGE_INTEGER end;
 
-    double interval;
+    double sortingTime, searchingTime;
 
 	for(int tc = 0; tc<5; tc++) {
 
@@ -160,18 +160,23 @@ int main(){
 		std::copy(unsorted, unsorted + len, unsortedCopyBubble);
 		std::copy(unsorted, unsorted + len, unsortedCopyHeap);
 */
+
+		cout << "Sorting new generated array ..." << endl;
 		QueryPerformanceCounter(&start);
 
 		sort(array, array + len);
 
 		QueryPerformanceCounter(&end);
 
-		interval = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
-		printf(" std::sort() time: %.2f microseconds \n", interval);
+		sortingTime = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
+		printf(" std::sort() time: %.2f microseconds \n", sortingTime);
 
 		cout << "array: ";
-		for (int m : array)
-			cout << m << ";";
+		for (int m = 0; m < len; m++) {
+			if (m % 200 == 0)
+				cout << "\n";
+			cout << array[m] << ";";
+		}
 		cout << endl;
 
 /*		//other sorting methods
@@ -194,26 +199,36 @@ int main(){
 		printf("  heapSort() time: %.2f microseconds \n\n", interval);
 */
 
-		int response;
+		int response = 0;
 		int index;
-		do {
-			cout << "Insert value to search / -1 to go to next random array" << endl;
+		cout << "Insert value to search..." << endl;
+		cin >> response;
+
+		while (cin.fail()) {
+			cout << "Not an integer! Try again..." << endl;
+			cin.clear();
+			cin.ignore(256,'\n');
 			cin >> response;
-			QueryPerformanceCounter(&start);
+		}
 
-			index = binarySearch(array, response, len);
-			if (index == -1)
-				cout << "value not found, try again"<< endl;
-			else
-				cout << "value is on position " << index << endl;
+		cout << "Searching for " << response << " ..." << endl;
+		QueryPerformanceCounter(&start);
+		index = binarySearch(array, response, len);
+		QueryPerformanceCounter(&end);
+		if (index == -1)
+			cout << "Value not found, sowwy"<< endl;
+		else
+			cout << "Value is on position " << index << endl;
 
-			QueryPerformanceCounter(&end);
-			interval = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
-			printf("binarySearch() time: %.2f microseconds \n", interval);
-		} while (response != -1);
+		searchingTime = static_cast<double>(end.QuadPart- start.QuadPart) / (frequency.QuadPart/1000000.0);
+		printf("binarySearch() time: %.2f microseconds \n", searchingTime);
 
+		printf ("Sorting and searching (without output printing) took %.2f microseconds.\n\n", sortingTime+searchingTime);
 
 	}
+
+	cout << "End of testcases and also end of file.\n Thanks for playing!";
+
 	return EXIT_SUCCESS;
 }
 
